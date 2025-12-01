@@ -20,12 +20,17 @@ fn part2(directions: std.ArrayList(bool), ammounts: std.ArrayList(i64)) u64 {
     var zeros: u64 = 0;
     var position: i64 = 50;
     for (directions.items, ammounts.items) |dir, ammount| {
-        if (!dir) {
-            position = 100 - position;
+        var i: i64 = 0;
+        while (i < ammount) : (i += 1) {
+            if (dir) {
+                position += 1;
+            } else {
+                position -= 1;
+            }
+            if (@rem(position, 100) == 0) {
+                zeros += 1;
+            }
         }
-        zeros += @abs(@divTrunc(position + ammount, 100));
-        position += ammount;
-        position = @rem(position, 100);
     }
     return zeros;
 }
