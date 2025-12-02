@@ -2,10 +2,9 @@ const std = @import("std");
 const day01 = @import("day01.zig");
 const day02 = @import("day02.zig");
 
-const default_path = "input/day02.txt";
+const default_path = "input/simple03.txt";
 
 pub fn main() !void {
-
     const io = std.testing.io;
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};

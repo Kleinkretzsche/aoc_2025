@@ -42,7 +42,7 @@ fn readInput(allocator: Allocator, reader: *std.Io.File.Reader) !std.ArrayList(R
 }
 
 fn invalid1(id: u64) bool {
-    const num_digits = (math.log10(id)) + 1;
+    const num_digits = (math.log(u64, 10, id)) + 1;
 
     if (num_digits % 2 == 1) {
         return false;
@@ -51,31 +51,30 @@ fn invalid1(id: u64) bool {
     const upper = @divFloor(id, math.pow(u64, 10, num_digits / 2));
     const lower = @mod(id, math.pow(u64, 10, num_digits / 2));
 
-    // std.debug.print("id: {}, upper: {}, lower: {}\n", .{ id, upper, lower });
     return upper == lower;
 }
 
-fn invalid2(id: u64) !bool {
-    var parts: [128]u64 = .{0} ** 128;
-    const num_digits = (math.log10(id)) + 1;
-
-    for (2..num_digits + 1) |k| {
-        if (num_digits % k != 0) {
+fn invalid2(id: u64) bool {
+    var buf: [128]u8 = undefined;
+    var writer: std.Io.Writer = .fixed(&buf);
+    writer.print("{d}", .{id}) catch |err| switch (err) {
+        error.WriteFailed => return false,
+    };
+    const len: u64 = math.log(u64, 10, id) + 1;
+    const str = buf[0 .. len + 1];
+    for (2..len + 1) |num_chunks| {
+        if (len % num_chunks != 0) {
             continue;
         }
-        var i: u64 = 0;
-        while (i < num_digits / k) : (i += 1) {
-            parts[i]  = @divFloor(id, std.math.pow(u64, 10, i * k));
-            parts[i] %= std.math.pow(u64, 10, k);
-        }
+        const chunksize = len / num_chunks;
         var flag = true;
-        for (1..num_digits/k) |j| {
+        for (0..chunksize) |chunk_index| {
             if (!flag) break;
-            flag &= parts[j] == parts[0];
+            for (1..num_chunks) |j| {
+                flag &= str[chunk_index] == str[chunk_index + j * chunksize];
+            }
         }
-        if (flag) {
-            return true;
-        }
+        if (flag) return true;
     }
     return false;
 }
@@ -94,11 +93,8 @@ fn part2(ranges: std.ArrayList(Range)) u64 {
     var acc: u64 = 0;
     for (ranges.items) |range| {
         for (range.start..range.end + 1) |i| {
-            if (invalid2(i)) |_| {
+            if (invalid2(i)) {
                 acc += i;
-            } else |err| {
-                std.debug.print("{any}\n", .{err});
-               return 0; 
             }
         }
     }
