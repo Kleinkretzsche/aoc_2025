@@ -1,6 +1,7 @@
 const std = @import("std");
 const day01 = @import("day01.zig");
 const day02 = @import("day02.zig");
+const day03 = @import("day03.zig");
 
 const default_path = "input/simple03.txt";
 
@@ -24,5 +25,5 @@ pub fn main() !void {
     var reader_buf: [1024]u8 = undefined;
     var reader = file.reader(io, &reader_buf);
 
-    try day02.run(allocator, &reader);
+    try day03.run(allocator, &reader);
 }

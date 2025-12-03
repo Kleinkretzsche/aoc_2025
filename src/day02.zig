@@ -2,9 +2,6 @@ const std = @import("std");
 const math = std.math;
 const Allocator = std.mem.Allocator;
 
-var gpa = std.heap.DebugAllocator(.{}){};
-const glob_alloc = gpa.allocator();
-
 pub fn run(allocator: Allocator, reader: *std.Io.File.Reader) !void {
     var input = try readInput(allocator, reader);
     defer input.deinit(allocator);
@@ -57,23 +54,29 @@ fn invalid1(id: u64) bool {
 fn invalid2(id: u64) bool {
     var buf: [128]u8 = undefined;
     var writer: std.Io.Writer = .fixed(&buf);
-    writer.print("{d}", .{id}) catch |err| switch (err) {
-        error.WriteFailed => return false,
+
+    writer.print("{d}", .{id}) catch {
+        return false;
     };
+
     const len: u64 = math.log(u64, 10, id) + 1;
     const str = buf[0 .. len + 1];
+
     for (2..len + 1) |num_chunks| {
         if (len % num_chunks != 0) {
             continue;
         }
+
         const chunksize = len / num_chunks;
         var flag = true;
+
         for (0..chunksize) |chunk_index| {
             if (!flag) break;
             for (1..num_chunks) |j| {
                 flag &= str[chunk_index] == str[chunk_index + j * chunksize];
             }
         }
+
         if (flag) return true;
     }
     return false;
