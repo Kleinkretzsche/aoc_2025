@@ -4,6 +4,7 @@ const Allocator = std.mem.Allocator;
 
 const inp_len = 100;
 // const inp_len = 15;
+
 const pack_len = 12;
 
 pub fn run(allocator: Allocator, reader: *std.Io.File.Reader) !void {
@@ -16,25 +17,21 @@ pub fn run(allocator: Allocator, reader: *std.Io.File.Reader) !void {
 
 fn readInput(allocator: Allocator, reader: *std.Io.File.Reader) !std.ArrayList([inp_len]u8) {
     var res: std.ArrayList([inp_len]u8) = try .initCapacity(allocator, 10);
-
     while (try reader.interface.takeDelimiter('\n')) |line| {
         if (line.len == 0) continue;
-
         var buf: [inp_len]u8 = undefined;
         @memset(buf[0..], 0);
-
         var i: usize = 0;
         while (i < line.len) : (i += 1) {
             buf[i] = line[i];
         }
-
         try res.append(allocator, buf);
     }
     return res;
 }
 
 fn max_pack_value(numbers: [inp_len]u8) u64 {
-    var max_pack = [_]u8{0} ** pack_len;
+    var max_pack: [pack_len]u8 = @splat('0');
     var prev_max_index: usize = 0;
     var current_max_index: usize = 0;
     for (0..pack_len) |pack_index| {
@@ -47,6 +44,7 @@ fn max_pack_value(numbers: [inp_len]u8) u64 {
         prev_max_index = current_max_index;
         current_max_index += 1;
     }
+
     return std.fmt.parseInt(u64, &max_pack, 10) catch 0;
 }
 
