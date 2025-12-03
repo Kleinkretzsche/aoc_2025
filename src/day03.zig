@@ -4,6 +4,7 @@ const Allocator = std.mem.Allocator;
 
 const inp_len = 100;
 // const inp_len = 15;
+const pack_len = 12;
 
 pub fn run(allocator: Allocator, reader: *std.Io.File.Reader) !void {
     var input = try readInput(allocator, reader);
@@ -32,6 +33,23 @@ fn readInput(allocator: Allocator, reader: *std.Io.File.Reader) !std.ArrayList([
     return res;
 }
 
+fn max_pack_value(numbers: [inp_len]u8) u64 {
+    var max_pack = [_]u8{0} ** pack_len;
+    var prev_max_index: usize = 0;
+    var current_max_index: usize = 0;
+    for (0..pack_len) |pack_index| {
+        for ((prev_max_index + 1)..(numbers.len - (pack_len - pack_index - 1))) |i| {
+            if (numbers[current_max_index] < numbers[i]) {
+                current_max_index = i;
+            }
+        }
+        max_pack[pack_index] = numbers[current_max_index];
+        prev_max_index = current_max_index;
+        current_max_index += 1;
+    }
+    return std.fmt.parseInt(u64, &max_pack, 10) catch 0;
+}
+
 fn part1(packs: std.ArrayList([inp_len]u8)) u64 {
     var acc: u64 = 0;
     for (packs.items) |pack| {
@@ -58,10 +76,8 @@ fn part1(packs: std.ArrayList([inp_len]u8)) u64 {
         }
 
         if (first < second) {
-            // std.debug.print("{s} {c} {s} {c} {s}\n", .{ pack[0..first], pack[first], pack[first + 1 .. second], pack[second], pack[second + 1 ..] });
             acc += 10 * (pack[first] - '0') + pack[second] - '0';
         } else if (first > second) {
-            // std.debug.print("{s} {c} {s} {c} {s}\n", .{ pack[0..second], pack[second], pack[second + 1 .. first], pack[first], pack[first + 1 ..] });
             acc += 10 * (pack[second] - '0') + pack[first] - '0';
         } else {
             unreachable;
@@ -71,6 +87,9 @@ fn part1(packs: std.ArrayList([inp_len]u8)) u64 {
 }
 
 fn part2(packs: std.ArrayList([inp_len]u8)) u64 {
-    _ = packs;
-    return 0;
+    var acc: u64 = 0;
+    for (packs.items) |pack| {
+        acc += max_pack_value(pack);
+    }
+    return acc;
 }
