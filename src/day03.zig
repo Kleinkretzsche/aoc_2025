@@ -7,16 +7,30 @@ const inp_len = 100;
 
 const pack_len = 12;
 
-pub fn run(allocator: Allocator, reader: *std.Io.File.Reader) !void {
-    var input = try readInput(allocator, reader);
-    defer input.deinit(allocator);
+const default_path = "input/day03.txt";
 
-    std.debug.print("part 1: {}\n", .{part1(input)});
-    std.debug.print("part 2: {}\n", .{part2(input)});
-}
+pub fn main() !void {
+    const io = std.testing.io;
 
-fn readInput(allocator: Allocator, reader: *std.Io.File.Reader) !std.ArrayList([inp_len]u8) {
-    var res: std.ArrayList([inp_len]u8) = try .initCapacity(allocator, 10);
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
+
+    const argv = try std.process.argsAlloc(allocator);
+    defer std.process.argsFree(allocator, argv);
+
+    const file = try std.Io.Dir.cwd().openFile(
+        io,
+        if (argv.len < 2) default_path else argv[1],
+        .{},
+    );
+    defer file.close(io);
+
+    var reader_buf: [1024]u8 = undefined;
+    var reader = file.reader(io, &reader_buf);
+
+    var input: std.ArrayList([inp_len]u8) = try .initCapacity(allocator, inp_len);
+
     while (try reader.interface.takeDelimiter('\n')) |line| {
         if (line.len == 0) continue;
         var buf: [inp_len]u8 = undefined;
@@ -25,9 +39,13 @@ fn readInput(allocator: Allocator, reader: *std.Io.File.Reader) !std.ArrayList([
         while (i < line.len) : (i += 1) {
             buf[i] = line[i];
         }
-        try res.append(allocator, buf);
+        try input.append(allocator, buf);
     }
-    return res;
+
+    defer input.deinit(allocator);
+
+    std.debug.print("part 1: {}\n", .{part1(input)});
+    std.debug.print("part 2: {}\n", .{part2(input)});
 }
 
 fn part1(packs: std.ArrayList([inp_len]u8)) u64 {

@@ -5,32 +5,48 @@ const Allocator = std.mem.Allocator;
 // const dim = 10;
 const dim = 137;
 
-pub fn run(allocator: Allocator, reader: *std.Io.File.Reader) !void {
-    const input = try readInput(allocator, reader);
-    defer allocator.free(input);
+pub fn main() !void {
+    const io = std.testing.io;
 
-    std.debug.print("part 2: {}\n", .{part2(input)});
-    std.debug.print("part 1: {}\n", .{part1(input)});
-}
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
-fn readInput(allocator: Allocator, reader: *std.Io.File.Reader) ![][dim]u8 {
-    var res = try allocator.alloc([dim]u8, dim);
+    const argv = try std.process.argsAlloc(allocator);
+    defer std.process.argsFree(allocator, argv);
+
+    const file = try std.Io.Dir.cwd().openFile(
+        io,
+        if (argv.len < 2) "input/day04.txt" else argv[1],
+        .{},
+    );
+    defer file.close(io);
+
+    var reader_buf: [1024]u8 = undefined;
+    var reader = file.reader(io, &reader_buf);
+
+    var input = try allocator.alloc([dim]u8, dim);
     var i: usize = 0;
+
     while (try reader.interface.takeDelimiter('\n')) |line| {
         if (line.len == 0) continue;
-        @memcpy(&res[i], line);
+        @memcpy(&input[i], line);
         i += 1;
     }
-    return res;
+
+    defer allocator.free(input);
+
+    std.debug.print("part 1: {}\n", .{part1(input)});
+    std.debug.print("part 2: {}\n", .{part2(input)});
 }
 
 fn printBoxes(boxes: [][dim]u8) void {
     var buf: [(dim + 1) * dim]u8 = @splat(0);
     for (0..dim) |i| {
         for (0..dim) |j| {
-           buf[(i+1)*dim + j] = boxes[i][j];
+            buf[(i + 1) * dim + j] = boxes[i][j];
         }
-       buf[(i+1)*dim] = '\n';
+        buf[(i + 1) * dim] = '\n';
     }
     std.debug.print("{s}\n", .{buf});
 }
@@ -76,8 +92,8 @@ fn part2(boxes: [][dim]u8) u64 {
     var changed: u64 = 1;
     var counter: u64 = 0;
     while (changed != 0) {
-        std.debug.print("\x1b[2J\x1b[H", .{});
-        printBoxes(boxes);
+        // std.debug.print("\x1b[2J\x1b[H", .{});
+        // printBoxes(boxes);
         for (0..dim) |i| {
             for (0..dim) |j| {
                 if (changes[i][j]) {

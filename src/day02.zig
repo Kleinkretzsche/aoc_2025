@@ -2,18 +2,27 @@ const std = @import("std");
 const math = std.math;
 const Allocator = std.mem.Allocator;
 
-pub fn run(allocator: Allocator, reader: *std.Io.File.Reader) !void {
-    var input = try readInput(allocator, reader);
-    defer input.deinit(allocator);
+pub fn main() !void {
+    const io = std.testing.io;
 
-    std.debug.print("part 1: {}\n", .{part1(input)});
-    std.debug.print("part 2: {}\n", .{part2(input)});
-}
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
-const Range = struct { start: u64, end: u64 };
+    const argv = try std.process.argsAlloc(allocator);
+    defer std.process.argsFree(allocator, argv);
 
-fn readInput(allocator: Allocator, reader: *std.Io.File.Reader) !std.ArrayList(Range) {
-    var ranges: std.ArrayList(Range) = try .initCapacity(allocator, 10);
+    const file = try std.Io.Dir.cwd().openFile(
+        io,
+        if (argv.len < 2) "input/day02.txt" else argv[1],
+        .{},
+    );
+    defer file.close(io);
+
+    var reader_buf: [1024]u8 = undefined;
+    var reader = file.reader(io, &reader_buf);
+
+    var input: std.ArrayList(Range) = try .initCapacity(allocator, 10);
     while (try reader.interface.takeDelimiter(',')) |line| {
         if (line.len == 0) continue;
 
@@ -33,10 +42,15 @@ fn readInput(allocator: Allocator, reader: *std.Io.File.Reader) !std.ArrayList(R
         const end = if (line[line.len - 1] == '\n') line.len - 1 else line.len;
         range.end = try std.fmt.parseInt(u64, line[sep_i + 1 .. end], 10);
 
-        try ranges.append(allocator, range);
+        try input.append(allocator, range);
     }
-    return ranges;
+    defer input.deinit(allocator);
+
+    std.debug.print("part 1: {}\n", .{part1(input)});
+    std.debug.print("part 2: {}\n", .{part2(input)});
 }
+
+const Range = struct { start: u64, end: u64 };
 
 fn invalid1(id: u64) bool {
     const num_digits = (math.log(u64, 10, id)) + 1;

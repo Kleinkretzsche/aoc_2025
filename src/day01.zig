@@ -1,24 +1,26 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const Input = struct {
-    directions: std.ArrayList(bool),
-    ammounts: std.ArrayList(i64),
-};
+pub fn main() !void {
+    const io = std.testing.io;
 
-pub fn run(allocator: Allocator, reader: *std.Io.File.Reader) !void {
-    var input = try readInput(allocator, reader);
-    var directions = input.directions;
-    var ammounts = input.ammounts;
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
-    defer directions.deinit(allocator);
-    defer ammounts.deinit(allocator);
+    const argv = try std.process.argsAlloc(allocator);
+    defer std.process.argsFree(allocator, argv);
 
-    std.debug.print("part 1: {}\n", .{part1(directions, ammounts)});
-    std.debug.print("part 2: {}\n", .{part2(directions, ammounts)});
-}
+    const file = try std.Io.Dir.cwd().openFile(
+        io,
+        if (argv.len < 2) "input/day01.txt" else argv[1],
+        .{},
+    );
+    defer file.close(io);
 
-fn readInput(allocator: Allocator, reader: *std.Io.File.Reader) !Input {
+    var reader_buf: [1024]u8 = undefined;
+    var reader = file.reader(io, &reader_buf);
+
     var directions: std.ArrayList(bool) = try .initCapacity(allocator, 64);
     var ammounts: std.ArrayList(i64) = try .initCapacity(allocator, 64);
     while (try reader.interface.takeDelimiter('\n')) |line| {
@@ -26,7 +28,11 @@ fn readInput(allocator: Allocator, reader: *std.Io.File.Reader) !Input {
         try directions.append(allocator, line[0] == 'R');
         try ammounts.append(allocator, try std.fmt.parseInt(i64, line[1..], 10));
     }
-    return (Input){ .directions = directions, .ammounts = ammounts };
+    defer directions.deinit(allocator);
+    defer ammounts.deinit(allocator);
+
+    std.debug.print("part 1: {}\n", .{part1(directions, ammounts)});
+    std.debug.print("part 2: {}\n", .{part2(directions, ammounts)});
 }
 
 fn part1(directions: std.ArrayList(bool), ammounts: std.ArrayList(i64)) u64 {
