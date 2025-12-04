@@ -9,8 +9,8 @@ pub fn run(allocator: Allocator, reader: *std.Io.File.Reader) !void {
     const input = try readInput(allocator, reader);
     defer allocator.free(input);
 
-    std.debug.print("part 1: {}\n", .{part1(input)});
     std.debug.print("part 2: {}\n", .{part2(input)});
+    std.debug.print("part 1: {}\n", .{part1(input)});
 }
 
 fn readInput(allocator: Allocator, reader: *std.Io.File.Reader) ![][dim]u8 {
@@ -25,12 +25,14 @@ fn readInput(allocator: Allocator, reader: *std.Io.File.Reader) ![][dim]u8 {
 }
 
 fn printBoxes(boxes: [][dim]u8) void {
+    var buf: [(dim + 1) * dim]u8 = @splat(0);
     for (0..dim) |i| {
         for (0..dim) |j| {
-           std.debug.print("{c}", .{boxes[i][j]});
+           buf[(i+1)*dim + j] = boxes[i][j];
         }
-       std.debug.print("\n", .{});
+       buf[(i+1)*dim] = '\n';
     }
+    std.debug.print("{s}\n", .{buf});
 }
 
 fn lookup(boxes: [][dim]u8, row: usize, col: usize) bool {
@@ -74,8 +76,8 @@ fn part2(boxes: [][dim]u8) u64 {
     var changed: u64 = 1;
     var counter: u64 = 0;
     while (changed != 0) {
-        // printBoxes(boxes);
-        // std.debug.print("\x1b[2J\x1b[H", .{});
+        std.debug.print("\x1b[2J\x1b[H", .{});
+        printBoxes(boxes);
         for (0..dim) |i| {
             for (0..dim) |j| {
                 if (changes[i][j]) {
