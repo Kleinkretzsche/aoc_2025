@@ -2,6 +2,7 @@ const std = @import("std");
 const math = std.math;
 const Allocator = std.mem.Allocator;
 
+// const dim = 10;
 const dim = 137;
 
 pub fn run(allocator: Allocator, reader: *std.Io.File.Reader) !void {
@@ -21,6 +22,15 @@ fn readInput(allocator: Allocator, reader: *std.Io.File.Reader) ![][dim]u8 {
         i += 1;
     }
     return res;
+}
+
+fn printBoxes(boxes: [][dim]u8) void {
+    for (0..dim) |i| {
+        for (0..dim) |j| {
+           std.debug.print("{c}", .{boxes[i][j]});
+        }
+       std.debug.print("\n", .{});
+    }
 }
 
 fn lookup(boxes: [][dim]u8, row: usize, col: usize) bool {
@@ -61,9 +71,11 @@ fn part1(boxes: [][dim]u8) u64 {
 
 fn part2(boxes: [][dim]u8) u64 {
     var changes: [dim][dim]bool = @splat(@splat(false));
-    var changed = true;
+    var changed: u64 = 1;
     var counter: u64 = 0;
-    while (changed) {
+    while (changed != 0) {
+        // printBoxes(boxes);
+        // std.debug.print("\x1b[2J\x1b[H", .{});
         for (0..dim) |i| {
             for (0..dim) |j| {
                 if (changes[i][j]) {
@@ -74,17 +86,17 @@ fn part2(boxes: [][dim]u8) u64 {
         for (0..dim) |i| {
             @memset(&changes[i], false);
         }
-        changed = false;
+        changed = 0;
         for (0..dim) |i| {
             for (0..dim) |j| {
                 const n = count_neighbors(boxes, i, j);
                 if (n < 4) {
-                    changed = true;
+                    changed += 1;
                     changes[i][j] = true;
                 } else {}
             }
         }
-        if (changed) counter += 1;
+        counter += changed;
     }
     return counter;
 }
