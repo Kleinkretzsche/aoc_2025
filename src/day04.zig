@@ -60,6 +60,31 @@ fn part1(boxes: [][dim]u8) u64 {
 }
 
 fn part2(boxes: [][dim]u8) u64 {
-    _ = boxes;
-    return 0;
+    var changes: [dim][dim]bool = @splat(@splat(false));
+    var changed = true;
+    var counter: u64 = 0;
+    while (changed) {
+        for (0..dim) |i| {
+            for (0..dim) |j| {
+                if (changes[i][j]) {
+                    boxes[i][j] = '.';
+                }
+            }
+        }
+        for (0..dim) |i| {
+            @memset(&changes[i], false);
+        }
+        changed = false;
+        for (0..dim) |i| {
+            for (0..dim) |j| {
+                const n = count_neighbors(boxes, i, j);
+                if (n < 4) {
+                    changed = true;
+                    changes[i][j] = true;
+                } else {}
+            }
+        }
+        if (changed) counter += 1;
+    }
+    return counter;
 }

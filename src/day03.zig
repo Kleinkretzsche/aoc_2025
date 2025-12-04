@@ -30,24 +30,6 @@ fn readInput(allocator: Allocator, reader: *std.Io.File.Reader) !std.ArrayList([
     return res;
 }
 
-fn max_pack_value(numbers: [inp_len]u8) u64 {
-    var max_pack: [pack_len]u8 = @splat('0');
-    var prev_max_index: usize = 0;
-    var current_max_index: usize = 0;
-    for (0..pack_len) |pack_index| {
-        for ((prev_max_index + 1)..(numbers.len - (pack_len - pack_index - 1))) |i| {
-            if (numbers[current_max_index] < numbers[i]) {
-                current_max_index = i;
-            }
-        }
-        max_pack[pack_index] = numbers[current_max_index];
-        prev_max_index = current_max_index;
-        current_max_index += 1;
-    }
-
-    return std.fmt.parseInt(u64, &max_pack, 10) catch 0;
-}
-
 fn part1(packs: std.ArrayList([inp_len]u8)) u64 {
     var acc: u64 = 0;
     for (packs.items) |pack| {
@@ -82,6 +64,23 @@ fn part1(packs: std.ArrayList([inp_len]u8)) u64 {
         }
     }
     return acc;
+}
+
+fn max_pack_value(numbers: [inp_len]u8) u64 {
+    var max_pack = [_]u8{0} ** pack_len;
+    var prev_max_index: usize = 0;
+    var current_max_index: usize = 0;
+    for (0..pack_len) |pack_index| {
+        for ((prev_max_index + 1)..(numbers.len - (pack_len - pack_index - 1))) |i| {
+            if (numbers[current_max_index] < numbers[i]) {
+                current_max_index = i;
+            }
+        }
+        max_pack[pack_index] = numbers[current_max_index];
+        prev_max_index = current_max_index;
+        current_max_index += 1;
+    }
+    return std.fmt.parseInt(u64, &max_pack, 10) catch 0;
 }
 
 fn part2(packs: std.ArrayList([inp_len]u8)) u64 {
