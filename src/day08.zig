@@ -74,7 +74,6 @@ const UnionFind = struct {
         const ri = self.find(i);
         const rj = self.find(j);
         if (ri == rj) return false;
-
         if (self.size[ri] < self.size[rj]) {
             self.parent[ri] = rj;
             self.size[rj] += self.size[ri];
@@ -84,29 +83,47 @@ const UnionFind = struct {
             self.size[ri] += self.size[rj];
             self.size[rj] = 0;
         }
-
         return true;
-    }
-
-    fn is_disjoint(self: UnionFind, i: usize, j: usize) bool {
-        const irep = self.find(i);
-        const jrep = self.find(j);
-        return irep != jrep;
-    }
-
-    fn is_atom(self: UnionFind, i: usize) bool {
-        return self.find(i) == i;
     }
 };
 
+fn part2(arena: std.mem.Allocator, junctions: []Vec3) !i64 {
+    const length = junctions.len;
+    const pair_count = (length * (length - 1)) / 2;
+    var pairs = try arena.alloc(PairDistance, pair_count);
+
+    var k: usize = 0;
+    for (0..length) |i| {
+        for (i + 1..length) |j| {
+            pairs[k] = PairDistance.make(junctions, i, j);
+            k += 1;
+        }
+    }
+
+    std.mem.sort(PairDistance, pairs, {}, PairDistance.lt);
+
+    var uf: UnionFind = try .init(arena, length);
+    var lastI: usize = 0;
+    var lastJ: usize = 0;
+    for (pairs) |pair| {
+        if (uf.unite(pair.idxs[0], pair.idxs[1])) {
+            lastI = pair.idxs[0];
+            lastJ = pair.idxs[1];
+        }
+    }
+    return junctions[lastI].xyz[0] * junctions[lastJ].xyz[0];
+}
+
 fn part1(arena: std.mem.Allocator, junctions: []Vec3) !u64 {
     const length = junctions.len;
+    const pair_count = (length * (length - 1)) / 2;
+    var pairs = try arena.alloc(PairDistance, pair_count);
 
-    var pairs = try arena.alloc(PairDistance, length * length);
-
+    var k: usize = 0;
     for (0..length) |i| {
-        for (0..length) |j| {
-            pairs[i * length + j] = PairDistance.make(junctions, i, j);
+        for (i + 1..length) |j| {
+            pairs[k] = PairDistance.make(junctions, i, j);
+            k += 1;
         }
     }
 
@@ -114,15 +131,10 @@ fn part1(arena: std.mem.Allocator, junctions: []Vec3) !u64 {
 
     var uf: UnionFind = try .init(arena, length);
 
-    var connections_left: u64 = 10;
+    const pair_len: usize = if (junctions.len == 20) 10 else 1000;
 
-    for (pairs) |pair| {
-        if (pair.distance == 0) continue;
-        if (connections_left == 1) break;
-        if (uf.unite(pair.idxs[0], pair.idxs[1])) {
-            std.debug.print("{} united with {}, cost={}\n", .{ junctions[pair.idxs[0]], junctions[pair.idxs[1]], pair.distance });
-            connections_left -= 1;
-        }
+    for (pairs[0..pair_len]) |pair| {
+        _ = uf.unite(pair.idxs[0], pair.idxs[1]);
     }
 
     const size_copy = try arena.dupe(usize, uf.size);
@@ -173,4 +185,5 @@ pub fn main() !void {
     const arena = arena_alloc.allocator();
 
     std.debug.print("part1: {}\n", .{try part1(arena, junctions)});
+    std.debug.print("part2: {}\n", .{try part2(arena, junctions)});
 }
