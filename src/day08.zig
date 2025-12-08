@@ -105,7 +105,7 @@ fn part1(arena: std.mem.Allocator, junctions: []Vec3) !u64 {
 
     var uf: UnionFind = try .init(arena, length * length);
 
-    var connections_left: u64 = 1000;
+    var connections_left: u64 = 500;
 
     for (pairs) |pair| {
         if (pair.distance == 0) continue;
