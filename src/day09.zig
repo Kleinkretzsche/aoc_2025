@@ -27,16 +27,21 @@ fn inside_rect(rect: [2][2]i64, point: [2]i64) bool {
     return point[0] > min_x and point[0] < max_x and point[1] > min_y and point[1] < max_y;
 }
 
-fn part2(tiles: [][2]i64) u64 {
+fn get_trace_tiles(allocator: std.mem.Allocator, tiles: [][2]i64) ![]i64 {
+    const list: std.Arraylist(i64) = try .initCapacity(allocator, 1024);
+    _ = tiles;
+    _ = list;
+}
+
+fn part2(allocator: std.mem.Allocator, tiles: [][2]i64) !u64 {
+    _ = allocator;
     var max: u64 = 0;
     for (0..tiles.len) |i| {
-        for (i..tiles.len) |j| blk: {
-            for (0..tiles.len) |k| {
-                if (inside_rect(.{ tiles[i], tiles[j] }, tiles[k])) {
-                    break :blk;
-                }
+        for (i..tiles.len) |j| {
+            const new_area = calc_area(tiles[i], tiles[j]);
+            if (new_area > max) {
+                max = new_area;
             }
-            max = @max(calc_area(tiles[i], tiles[j]), max);
         }
     }
     return max;
@@ -74,5 +79,5 @@ pub fn main() !void {
         });
     }
     std.debug.print("part1: {}\n", .{part1(tile_list.items)});
-    std.debug.print("part2: {}\n", .{part2(tile_list.items)});
+    std.debug.print("part2: {}\n", .{try part2(allocator, tile_list.items)});
 }
